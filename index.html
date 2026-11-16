@@ -191,6 +191,21 @@ footer{margin-top:40px;text-align:center;color:var(--ink3);font:italic 13px var(
 .seg button:last-child{border-right:none}
 .seg button.on{background:var(--ink);color:#f7f3ea}
 #report{white-space:pre-wrap;font-size:12.5px;line-height:1.6;color:var(--ink2);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:12px;display:none;max-height:320px;overflow:auto}
+
+/* голосовой дневник */
+.voice-bar{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.voice-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;border:1px solid var(--line2);background:transparent;color:var(--ink2);cursor:pointer;font:14px var(--sans);transition:all .15s}
+.voice-btn:hover{border-color:var(--accent);color:var(--ink)}
+.voice-btn.on{background:var(--bad);border-color:var(--bad);color:#f7f3ea}
+.voice-btn.on svg{animation:pulse 1.2s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+.voice-hint{font-size:12px;color:var(--ink3);margin-top:6px}
+.vnote{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px dashed var(--line)}
+.vnote:first-child{border-top:none}
+.vnote time{flex:none;font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums;white-space:nowrap;margin-top:1px}
+.vnote p{flex:1;font:14px/1.5 var(--sans);color:var(--ink2);margin:0}
+.vnote .del{opacity:.55}
+.vnote:hover .del{opacity:1}
 </style>
 </head>
 <body>
@@ -255,6 +270,18 @@ footer{margin-top:40px;text-align:center;color:var(--ink3);font:italic 13px var(
   <div class="card">
     <div class="lbl" style="margin-top:0">Вечерний чек-ин · одна фраза о дне</div>
     <input class="in" id="t-evening" placeholder="Как прошёл день? Что одним словом?">
+  </div>
+  <div class="card" id="voice-card">
+    <h3 style="font:500 17px var(--serif);margin-bottom:6px">Голосовой дневник</h3>
+    <p style="font-size:13px;color:var(--ink3);margin:0 0 10px">Наговори мысли, эмоции, наблюдения — всё, что пришло в голову за день. При формировании отчёта для ИИ эти записи добавятся автоматически.</p>
+    <div class="voice-bar">
+      <button class="voice-btn" id="v-btn" onclick="toggleVoice()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+        <span id="v-label">Записать мысль</span>
+      </button>
+      <span class="voice-hint" id="v-hint">Работает в Chrome, Edge и Safari. Нажми и говори.</span>
+    </div>
+    <div id="voice-list" style="margin-top:10px"></div>
   </div>
   <div id="report-wrap" class="card" style="display:none">
     <h3 style="font:500 17px var(--serif)">Отчёт для ИИ</h3>
@@ -401,9 +428,9 @@ footer{margin-top:40px;text-align:center;color:var(--ink3);font:italic 13px var(
 <script>
 const KEY='trackerPaperV3', OLD='trackerPaperV2';
 let memStore=null;
-function blank(){return {goals:[],daily:[],energy:{drain:'',charge:'',focus:''},reviews:[],grat:{},nav:{},set:{depth:'std',quotes:true,grat:true,strict:false},journal:{int:{},eve:{},mood:{}},rewards:[],claimed:[],spent:0,sessions:[]};}
+function blank(){return {goals:[],daily:[],energy:{drain:'',charge:'',focus:''},reviews:[],grat:{},nav:{},set:{depth:'std',quotes:true,grat:true,strict:false},journal:{int:{},eve:{},mood:{},voice:{}},rewards:[],claimed:[],spent:0,sessions:[]};}
 function migrate(o){o.daily.forEach(d=>{Object.keys(d.days||{}).forEach(k=>{if(d.days[k]===true)d.days[k]='done';});});
-  o.journal=o.journal||{int:{},eve:{},mood:{}};o.rewards=o.rewards||[];o.claimed=o.claimed||[];o.spent=o.spent||0;o.sessions=o.sessions||[];
+  o.journal=o.journal||{int:{},eve:{},mood:{},voice:{}};o.journal.voice=o.journal.voice||{};o.rewards=o.rewards||[];o.claimed=o.claimed||[];o.spent=o.spent||0;o.sessions=o.sessions||[];
   return Object.assign(blank(),o);}
 function load(){try{const s=localStorage.getItem(KEY);if(s)return migrate(JSON.parse(s));
   const o=localStorage.getItem(OLD);if(o){const m=migrate(JSON.parse(o));localStorage.setItem(KEY,JSON.stringify(m));return m;}}catch(e){}
@@ -558,6 +585,7 @@ function renderToday(){
   if(!sel.options.length){const o=document.createElement('option');o.textContent='Свободная сессия';sel.appendChild(o);}
   const todayS=(S.sessions||[]).filter(s=>s.date===k);
   document.getElementById('focus-sessions').textContent=todayS.length?('Сегодня сессий: '+todayS.length+' ('+todayS.reduce((a,s)=>a+s.mins,0)+' мин)'):'Один цикл — 25 минут непрерывного внимания.';
+  renderVoice();
 }
 document.getElementById('today-list').addEventListener('click',e=>{
   if(!e.target.dataset.s)return;const row=e.target.closest('.t-row');const d=S.daily.find(x=>x.id===row.dataset.d);
@@ -566,6 +594,47 @@ document.getElementById('today-list').addEventListener('click',e=>{
 });
 document.getElementById('t-intention').addEventListener('input',e=>{S.journal.int[todayK()]=e.target.value;save();});
 document.getElementById('t-evening').addEventListener('input',e=>{S.journal.eve[todayK()]=e.target.value;save();});
+
+/* ---------- голосовой дневник ---------- */
+let vRec=null,vListening=false;
+function hasVoiceApi(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
+function renderVoice(){
+  const card=document.getElementById('voice-card');
+  if(!hasVoiceApi()){card.style.display='none';return;}
+  card.style.display='';
+  const k=todayK();const notes=S.journal.voice[k]||[];
+  const list=document.getElementById('voice-list');list.innerHTML='';
+  if(!notes.length){list.innerHTML='<p class="note" style="margin:0">Пока нет записей. Нажми «Записать мысль» и говори — текст появится здесь.</p>';return;}
+  notes.forEach(n=>{
+    const row=document.createElement('div');row.className='vnote';row.dataset.vid=n.id;
+    row.innerHTML='<time>'+esc(n.time)+'</time><p>'+esc(n.text)+'</p><button class="del" title="Удалить">×</button>';
+    list.appendChild(row);
+  });
+}
+function toggleVoice(){
+  const btn=document.getElementById('v-btn');const label=document.getElementById('v-label');const hint=document.getElementById('v-hint');
+  if(vListening&&vRec){vRec.stop();vListening=false;btn.classList.remove('on');label.textContent='Записать мысль';hint.textContent='Запись сохранена.';return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){hint.textContent='Голосовой ввод не поддерживается в этом браузере. Попробуй Chrome, Edge или Safari.';return;}
+  vRec=new SR();vRec.lang='ru-RU';vRec.interimResults=false;vRec.maxAlternatives=1;
+  vRec.onstart=()=>{vListening=true;btn.classList.add('on');label.textContent='Слушаю…';hint.textContent='Говори чётко. Нажми ещё раз, чтобы остановить.';};
+  vRec.onend=()=>{if(vListening){vListening=false;btn.classList.remove('on');label.textContent='Записать мысль';hint.textContent='Запись завершена.';}};
+  vRec.onerror=e=>{vListening=false;btn.classList.remove('on');label.textContent='Записать мысль';hint.textContent='Ошибка: '+e.error+'. Попробуй ещё раз.';};
+  vRec.onresult=e=>{
+    const text=e.results[0][0].transcript.trim();if(!text)return;
+    const k=todayK();S.journal.voice[k]=S.journal.voice[k]||[];
+    const now=new Date();const time=(now.getHours()<10?'0':'')+now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+    S.journal.voice[k].push({id:uid(),text:text,time:time});save();renderVoice();
+    hint.textContent='Сохранено: «'+text.slice(0,60)+(text.length>60?'…':'')+'»';
+  };
+  vRec.start();
+}
+function delVoice(id){
+  const k=todayK();if(!S.journal.voice[k])return;
+  S.journal.voice[k]=S.journal.voice[k].filter(n=>n.id!==id);save();renderVoice();
+}
+document.getElementById('voice-list').addEventListener('click',e=>{
+  if(e.target.classList.contains('del')){const row=e.target.closest('.vnote');if(row)delVoice(row.dataset.vid);}
+});
 
 /* ---------- таймер фокуса ---------- */
 let tInt=null,tLeft=25*60;
@@ -848,6 +917,7 @@ function buildReport(){
   const k=todayK();
   out+='\n[Сегодня] настроение '+(S.journal.mood[k]||'—')+'/5 · намерение: '+(S.journal.int[k]||'—')+'\n';
   const gk=S.grat[k];if(gk&&gk.some(x=>x.trim()))out+='[Благодарности] '+gk.filter(x=>x.trim()).join(' | ')+'\n';
+  const vk=S.journal.voice[k];if(vk&&vk.length){out+='\n[Голосовые заметки дня]\n';vk.forEach(n=>{out+=n.time+' — '+n.text+'\n';});}
   if(S.reviews.length){const r=S.reviews[0];out+='\n[Последняя рефлексия] '+r.week+' · оценка '+(r.rate||'—')+'/5\nСработало: '+(r.r1||'—')+'\nПодстроить: '+(r.r4||'—')+'\n';}
   const rp=document.getElementById('report');rp.textContent=out;rp.style.display='block';
   document.getElementById('report-wrap').style.display='';
@@ -876,7 +946,7 @@ function exportData(){const blob=new Blob([JSON.stringify(S,null,2)],{type:'appl
 function importData(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();
   rd.onload=()=>{try{S=migrate(JSON.parse(rd.result));save();renderAll();alert('Данные загружены.');}catch(e){alert('Не удалось прочитать файл.');}};rd.readAsText(f);}
 
-function renderAll(){renderMotto();renderGoals();renderDaily();renderToday();renderNav();renderReviews();renderRewards();renderSet();}
+function renderAll(){renderMotto();renderGoals();renderDaily();renderToday();renderNav();renderReviews();renderRewards();renderVoice();renderSet();}
 renderAll();
 </script>
 </body>
