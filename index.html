@@ -4,4 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Мой трекер · 6 месяцев</title>
-<link rel="icon" type="image/png" sizes="192x192" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAqXElEQVR4nO2daZscV5Xn//fGnktlVmZlLVKptFlGFsIeyzLYgzfcgNzGDAYa0zTT/YKZ5pnX8z3mA7T76XkxQxuapsENjcd2wxhsj8FuW7RAxrKl0lL7XpmVS+z3zosbkWuVVHJVrorf88jlp5bMyIh/nDj3nHPPIaXCCkdExIBAu30AERH7SSToiIEiEnTEQBEJOmKgiAQdMVBEgo4YKCJBRwwUkaAjBopI0BEDRSToiIEiEnTEQBEJOmKgiAQdMVBEgo4YKCJBRwwUkaAjBopI0BEDRSToiIEiEnTEQBEJOmKgiAQdMVDI3T6AwUBsnOd1++cJITf/i7pfrv3qzf8m4tZEgr5tODgPRUhBCECIBKBRxPWC3Y7tfpdzFtwUrO49IpHfDpGgb0UoTEJAKAUhFARChL7vwvd8OI4JzhhsqwwODnCI73HeIkcOIWZVNQACEBBoehyEUqiqASpJkCQFhBBwBCJnrOE4InaGRI1mWuGcgxAi/lFhfZnvwbFNOHZFfHVM+J4LEIBSuVWkRhwEBM0nlwDg4LDNVvEz5gEckGQFqmpA1QyoWgyqZoBKwvZw5oNzXj3GiEYiQYcEz3hCKSihYIzBdSxUKgXYZgmuYwEEkCQ1EJoBRdUhy2rVou7F5Qgtvuc5cB0ruHlM+L4DcEBRdWhGArFYCoqqg1IKVm+9I3EDiAQNzjkopa...
+<meta name="theme-color" content="#f4f1ea">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Мой трекер">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="https://filebin.net/tracker-icons-1794823890/apple-touch-icon.png">
+<style>
+body{margin:0;background:#f4f1ea;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Georgia,'Times New Roman',serif;color:#6d5f46}
+#ld{text-align:center;padding:24px;font-style:italic;line-height:1.7}
+.sp{width:38px;height:38px;margin:0 auto 14px;border:3px solid #e3ddcc;border-top-color:#8a7f68;border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="ld"><div class="sp"></div>Мой трекер загружается…</div>
+<script>
+var CH=["c01.txt", "c02.txt", "c03.txt", "c04.txt", "c05.txt", "c06.txt", "c07.txt", "c08.txt", "c09.txt", "c10.txt", "c11.txt", "c12.txt", "c13.txt", "c14.txt", "c15.txt", "c16.txt"];
+async function boot(){try{
+var parts=[];
+for(var i=0;i<CH.length;i++){var r=await fetch('chunks/'+CH[i],{cache:'no-store'});if(!r.ok)throw 0;parts.push(await r.text());}
+var bin=atob(parts.join('').replace(/\s+/g,''));
+var bytes=new Uint8Array(bin.length);
+for(var j=0;j<bin.length;j++)bytes[j]=bin.charCodeAt(j);
+var html=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+if(html.indexOf('trackerPaperV3')<0)throw 0;
+html=html.replace(/href="icon-192\.png"/g,'href="icon.svg"').replace(/href="apple-touch-icon\.png"/g,'href="https://filebin.net/tracker-icons-1794823890/apple-touch-icon.png"');
+document.open();document.write(html);document.close();
+}catch(e){document.getElementById('ld').innerHTML='Не удалось загрузить приложение.<br>Проверь интернет и обнови страницу.';}}
+boot();
+</script>
+</body>
+</html>
