@@ -21,12 +21,12 @@ body{margin:0;background:#f4f1ea;display:flex;align-items:center;justify-content
 <body>
 <div id="ld"><div class="sp"></div>Мой трекер загружается…</div>
 <script>
-var CH=["c01.txt", "c02.txt", "c03.txt", "c04.txt", "c05.txt", "c06.txt", "c07.txt", "c08.txt", "c09.txt", "c10.txt", "c11.txt", "c12.txt", "c13.txt", "c14.txt", "c15.txt", "c16.txt"];
+var CH=["h01.txt", "h02.txt", "h03.txt", "h04.txt", "h05.txt", "h06.txt", "h07.txt", "h08.txt", "h09.txt", "h10.txt", "h11.txt", "h12.txt", "h13.txt", "h14.txt", "h15.txt", "h16.txt", "h17.txt", "h18.txt", "h19.txt", "h20.txt", "h21.txt", "h22.txt", "h23.txt", "h24.txt"];
 async function boot(){try{
 var parts=await Promise.all(CH.map(function(c){return fetch('chunks/'+c,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text();});}));
-var bin=atob(parts.join('').replace(/\s+/g,''));
-var bytes=new Uint8Array(bin.length);
-for(var j=0;j<bin.length;j++)bytes[j]=bin.charCodeAt(j);
+var hex=parts.join('').replace(/\s+/g,'');
+var bytes=new Uint8Array(hex.length/2);
+for(var j=0;j<bytes.length;j++)bytes[j]=parseInt(hex.substr(j*2,2),16);
 var html=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
 if(html.indexOf('trackerPaperV3')<0)throw 0;
 document.open();document.write(html);document.close();
