@@ -23,8 +23,7 @@ body{margin:0;background:#f4f1ea;display:flex;align-items:center;justify-content
 <script>
 var CH=["c01.txt", "c02.txt", "c03.txt", "c04.txt", "c05.txt", "c06.txt", "c07.txt", "c08.txt", "c09.txt", "c10.txt", "c11.txt", "c12.txt", "c13.txt", "c14.txt", "c15.txt", "c16.txt"];
 async function boot(){try{
-var parts=[];
-for(var i=0;i<CH.length;i++){var r=await fetch('chunks/'+CH[i],{cache:'no-store'});if(!r.ok)throw 0;parts.push(await r.text());}
+var parts=await Promise.all(CH.map(function(c){return fetch('chunks/'+c,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text();});}));
 var bin=atob(parts.join('').replace(/\s+/g,''));
 var bytes=new Uint8Array(bin.length);
 for(var j=0;j<bin.length;j++)bytes[j]=bin.charCodeAt(j);
