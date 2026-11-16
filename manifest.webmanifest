@@ -1,1 +1,14 @@
-...
+{
+  "name": "Мой трекер · 6 месяцев",
+  "short_name": "Мой трекер",
+  "description": "Персональный трекер целей и привычек на 6 месяцев",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#f4f1ea",
+  "lang": "ru",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}
